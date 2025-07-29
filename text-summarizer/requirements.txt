@@ -1,0 +1,18 @@
+# Core NLP Models
+transformers>=4.40.0
+
+# PDF Handling
+pymupdf>=1.24.0
+
+# Evaluation Metrics
+rouge-score>=0.1.2
+
+# Web App
+streamlit>=1.35.0
+
+# PDF Download Feature
+reportlab>=4.0.0
+
+# Optional (recommended for smooth model downloading)
+torch>=2.2.0
+#sentencepiece>=0.1.99   # Needed for PEGASUS & T5 models
