@@ -2,19 +2,18 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+import streamlit as st
 from src.pdf_utils import extract_text_from_pdf, chunk_text
 from src.summarizer import Summarizer
 from io import BytesIO
-from reportlab.pdfgen import canvas   # for PDF download
+from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-import gradio as gr
 
 def summarize_pdf(pdf_file, model_choice):
     """
     Summarizes an uploaded PDF using the selected model.
     Returns summary text, downloadable TXT bytes, and downloadable PDF bytes.
     """
-
     # ✅ Save uploaded PDF temporarily
     temp_path = "temp.pdf"
     with open(temp_path, "wb") as f:
@@ -54,31 +53,40 @@ def summarize_pdf(pdf_file, model_choice):
 
     return final_summary, txt_bytes, pdf_bytes
 
-# ✅ Gradio UI
-with gr.Blocks() as demo:
-    gr.Markdown("# 📄 PDF Text Summarizer\nUpload a PDF and get an **AI-generated summary** using BART or PEGASUS.")
 
-    model_choice = gr.Dropdown(
-        ["facebook/bart-large-cnn", "google/pegasus-xsum"],
-        label="Choose a model",
-        value="facebook/bart-large-cnn"
-    )
+# 🚀 STREAMLIT APP
+st.title("📄 PDF Text Summarizer")
+st.write("Upload a PDF and get an **AI-generated summary** using BART or PEGASUS.")
 
-    pdf_input = gr.File(label="Upload your PDF", file_types=[".pdf"])
-    summary_output = gr.Textbox(label="📜 Final Summary", lines=10)
+# Model selection
+model_choice = st.selectbox(
+    "Choose a model:",
+    ["facebook/bart-large-cnn", "google/pegasus-xsum"]
+)
 
-    txt_download = gr.File(label="📥 Download Summary as TXT")
-    pdf_download = gr.File(label="📥 Download Summary as PDF")
+# PDF upload
+pdf_file = st.file_uploader("📂 Upload your PDF", type=["pdf"])
 
-    submit_btn = gr.Button("Summarize PDF")
+if pdf_file:
+    if st.button("Summarize PDF"):
+        with st.spinner("Summarizing... Please wait ⏳"):
+            summary, txt_bytes, pdf_bytes = summarize_pdf(pdf_file, model_choice)
 
-    # ✅ Connect function
-    submit_btn.click(
-        summarize_pdf,
-        inputs=[pdf_input, model_choice],
-        outputs=[summary_output, txt_download, pdf_download]
-    )
+        # ✅ Display summary
+        st.subheader("📜 Final Summary")
+        st.text_area("", summary, height=300)
 
-# ✅ Hugging Face will auto-run this
-if __name__ == "__main__":
-    demo.launch()
+        # ✅ Provide download buttons
+        st.download_button(
+            label="📥 Download Summary as TXT",
+            data=txt_bytes,
+            file_name="summary.txt",
+            mime="text/plain"
+        )
+
+        st.download_button(
+            label="📥 Download Summary as PDF",
+            data=pdf_bytes,
+            file_name="summary.pdf",
+            mime="application/pdf"
+        )
